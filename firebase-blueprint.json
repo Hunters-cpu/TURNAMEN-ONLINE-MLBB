@@ -1,0 +1,24 @@
+{
+  "entities": {
+    "teams": {
+      "title": "Teams",
+      "description": "Registered tournament teams"
+    },
+    "siteConfig": {
+      "title": "Site Config",
+      "description": "Shared central configuration, match schedules, announcements, donation records, etc."
+    },
+    "donations": {
+      "title": "Donations",
+      "description": "Saweria donation records logged permanently into Firebase"
+    },
+    "bets": {
+      "title": "Prediction Bets",
+      "description": "Central user prediction bets"
+    },
+    "wallets": {
+      "title": "User Wallets",
+      "description": "Central user wallet balances and history"
+    }
+  }
+}

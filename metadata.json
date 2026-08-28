@@ -1,0 +1,6 @@
+{
+  "name": "Hunters Community",
+  "description": "Pusat Turnamen Free Fire & Mobile Legends Resmi & Terpercaya dikelola oleh DEXZ STORE",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

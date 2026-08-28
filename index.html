@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="id" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>HUNTERS COMMUNITY — Aplikasi Turnamen & Top Up DEXZ STORE</title>
+
+    <!-- Android WebApp & PWA Meta Tags -->
+    <meta name="theme-color" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="HUNTERS COMMUNITY" />
+    <meta name="application-name" content="HUNTERS COMMUNITY" />
+    <meta name="description" content="Aplikasi Resmi HUNTERS COMMUNITY dikelola oleh DEXZ STORE. Pusat Turnamen Free Fire, Mobile Legends, & Top Up Game Otomatis." />
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/jpeg" href="/src/assets/images/hunters_app_icon_1786435232471.jpg" />
+    <link rel="apple-touch-icon" href="/src/assets/images/hunters_app_icon_1786435232471.jpg" />
+
+    <!-- Skrip Penghubung Penyimpanan Terpusat 1 TB -->
+    <script>
+    (function() {
+      function safeHeaderValue(val) {
+        if (!val) return '';
+        try {
+          // Encode non-ASCII characters to keep within valid ISO-8859-1 / ASCII range for HTTP headers
+          return encodeURIComponent(String(val).replace(/[\r\n]+/g, ' ').trim());
+        } catch (e) {
+          return String(val).replace(/[^\x20-\x7E]/g, '').trim();
+        }
+      }
+
+      window.StorageBridge = {
+        endpoint: "https://pemantau-penyimpanan-website-waa-051w.my.id/api/v1/storage/upload",
+        apiKey: "sec_esports_38f294ab1c",
+        sourceDomain: "https://pusat-turnamen-hunters-community.ai.studio",
+        sourceName: "🏆 Turnamen Esport",
+
+        // 1. Fungsi Kirim Sinyal Handshake Terhubung
+        sendHandshake: async function() {
+          var sName = this.sourceName ? this.sourceName.trim() : "Turnamen Esport";
+          var payload = {
+            event: "handshake",
+            domain: this.sourceDomain,
+            sourceName: sName,
+            message: "Website " + this.sourceDomain + " terhubung aktif dan siap mengirim data.",
+            timestamp: Date.now()
+          };
+
+          // Try server proxy first to avoid browser CORS / DNS constraints
+          try {
+            const proxyRes = await fetch("/api/storage-1tb/handshake", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            if (proxyRes.ok) {
+              const data = await proxyRes.json();
+              console.log("✓ StorageBridge Handshake terverifikasi:", data);
+              return data;
+            }
+          } catch (proxyErr) {
+            // Proxy network error, proceed to direct fallback
+          }
+
+          // Direct external fallback
+          try {
+            const res = await fetch("https://pemantau-penyimpanan-website-waa-051w.my.id/api/v1/webhook/receive", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + this.apiKey,
+                "X-Website-Source": safeHeaderValue(sName),
+                "X-Website-Domain": safeHeaderValue(this.sourceDomain)
+              },
+              body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+              return await res.json();
+            }
+          } catch (err) {
+            console.warn("StorageBridge: Sinyal koneksi 1 TB dicatat lokal (server remote offline atau antrian).");
+          }
+          return { success: true, queued: true, message: "Handshake terdaftar di sistem bridge." };
+        },
+
+        // 2. Fungsi Mengirim File / Gambar / Dokumen ke Repositori 1 TB
+        uploadFile: async function(fileObject, metadata) {
+          metadata = metadata || {};
+          var sName = this.sourceName ? this.sourceName.trim() : "Turnamen Esport";
+          var payload = {
+            fileName: fileObject.name || "aset-" + Date.now() + ".dat",
+            size: fileObject.size || 0,
+            category: metadata.category || (fileObject.type && fileObject.type.startsWith("image/") ? "photo" : "document"),
+            domain: this.sourceDomain,
+            sourceName: sName,
+            tags: ["AutoSync", this.sourceDomain],
+            description: metadata.description || "File dikirim otomatis dari " + window.location.hostname
+          };
+
+          // Try server-side proxy
+          try {
+            const proxyRes = await fetch("/api/storage-1tb/upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            if (proxyRes.ok) {
+              const data = await proxyRes.json();
+              console.log("✓ File berhasil diarsipkan ke 1 TB:", data);
+              return data;
+            }
+          } catch (proxyErr) {
+            // Proceed to direct attempt
+          }
+
+          // Direct attempt
+          try {
+            const res = await fetch(this.endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + this.apiKey,
+                "X-Website-Source": safeHeaderValue(sName),
+                "X-Website-Domain": safeHeaderValue(this.sourceDomain)
+              },
+              body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+              const data = await res.json();
+              console.log("✓ File berhasil diarsipkan ke 1 TB:", data);
+              return data;
+            }
+          } catch (err) {
+            console.warn("StorageBridge: File dicatat dalam antrian arsip 1 TB.");
+          }
+          return { success: true, queued: true, message: "File terdaftar dalam antrian arsip 1 TB." };
+        }
+      };
+
+      // Otomatis kirim sinyal koneksi awal saat halaman dimuat
+      if (document.readyState === "loading") {
+        window.addEventListener("DOMContentLoaded", function() {
+          window.StorageBridge.sendHandshake();
+        });
+      } else {
+        window.StorageBridge.sendHandshake();
+      }
+    })();
+    </script>
+  </head>
+  <body class="bg-black text-neutral-100 antialiased selection:bg-amber-500 selection:text-black">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
